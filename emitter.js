@@ -14,6 +14,8 @@ module.exports = getEmitter;
 function getEmitter() {
     let events = {};
 
+    // Создаю список всех РЕАЛИЗУЕМЫХ команд из длинной
+    // Пример: hello.world.now -> [hello, hello.world, hello.world.now]
     function commandsMaker(command) {
         let splits = command.split('.');
         let commands = [splits[0] + '.'];
@@ -27,6 +29,8 @@ function getEmitter() {
         return commands;
     }
 
+    // Создаю список всех команд от которых ОТПИСАТЬСЯ из головной
+    // Пример: hello -> [hello, hello.world, hello.*** и т.д.]
     function commandsFinder(command) {
         let keys = Object.keys(events);
         let commands = keys.filter(key => key.startsWith(command + '.'));
@@ -44,7 +48,9 @@ function getEmitter() {
          * @returns {Params}
          */
         on: function (event, context, handler) {
+            // Добавляю точку для удобной индексации в будущем
             event = event + '.';
+            // Если нет коллекции - создаю
             if (!events[event]) {
                 events[event] = [];
             }
@@ -61,7 +67,10 @@ function getEmitter() {
          */
         off: function (event, context) {
             let commands = commandsFinder(event);
+            // Пробегаюсь по списку всех комманд для отписки
             commands.forEach(command => {
+                // Ищу в каждой коллекции нужного мне человека
+                // И ремувлю их
                 events[command].forEach(action => {
                     if (action.context === context) {
                         let index = events[command].indexOf(action);
@@ -79,10 +88,14 @@ function getEmitter() {
          * @returns {Params}
          */
         emit: function (event) {
+            // Получаю все комманды для реализации
             let fullEvent = commandsMaker(event);
+            // Для каждой из них
             fullEvent.forEach(command => {
+                // Ищу коллекцию
                 if (events[command]) {
                     events[command].forEach(action => {
+                        // Для каждого человека внутри колю резолв-функцию
                         action.handler.call(action.context);
                     });
                 }
